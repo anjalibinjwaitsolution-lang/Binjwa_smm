@@ -1,0 +1,202 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: dark;
+  /* Dark theme inspired by Haqq Network */
+  --background: oklch(0.1 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.15 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.12 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.98 0 0);
+  --primary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.2 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.72 0.19 35);
+  --accent-foreground: oklch(0.1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.25 0 0);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.98 0 0);
+  --chart-1: oklch(0.72 0.19 35);
+  --chart-2: oklch(0.65 0.25 160);
+  --chart-3: oklch(0.7 0.15 280);
+  --chart-4: oklch(0.75 0.2 60);
+  --chart-5: oklch(0.68 0.22 200);
+  --radius: 12px;
+  --sidebar: oklch(0.12 0 0);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.98 0 0);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0.2 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.25 0 0);
+  --sidebar-ring: oklch(0.98 0 0);
+}
+
+@theme inline {
+  /* Typography */
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-inter);
+
+  /* Haqq Network color palette - dark with vibrant accents */
+  --color-primary: #ffffff;
+  --color-primary-dark: #e5e5e5;
+  --color-secondary: #1a1a1a;
+  --color-secondary-dark: #000000;
+
+  /* Backgrounds */
+  --color-background: #000000;
+  --color-background-subtle: #0a0a0a;
+  --color-background-muted: #1a1a1a;
+  --color-background-card: #0f0f0f;
+  --color-background-input: #1a1a1a;
+  --color-popover: #0a0a0a;
+
+  /* Foregrounds */
+  --color-foreground: #ffffff;
+  --color-foreground-muted: #a3a3a3;
+  --color-foreground-subtle: #737373;
+  --color-popover-foreground: #ffffff;
+
+  /* Accent Colors - vibrant orange and green */
+  --color-accent-orange: #ff6b4a;
+  --color-accent-green: #00d9a3;
+  --color-accent-gold: #ffa726;
+
+  /* Status Colors */
+  --color-success: #00d9a3;
+  --color-success-foreground: #000000;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+  --color-warning: #ffa726;
+  --color-warning-foreground: #000000;
+  --color-error: #ef4444;
+  --color-error-foreground: #ffffff;
+
+  /* Border */
+  --color-border: #262626;
+  --color-border-subtle: #1a1a1a;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Sidebar Colors */
+  --color-sidebar: #0a0a0a;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #ffffff;
+  --color-sidebar-primary-foreground: #000000;
+  --color-sidebar-accent: #1a1a1a;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #262626;
+  --color-sidebar-ring: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-white text-black;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl lg:text-5xl mb-6;
+  }
+
+  h2 {
+    @apply text-2xl lg:text-3xl mb-4;
+  }
+
+  h3 {
+    @apply text-xl lg:text-2xl mb-3;
+  }
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* Haqq-inspired gradient effects */
+.gradient-primary {
+  background: linear-gradient(135deg, #ff6b4a 0%, #ffa726 100%);
+}
+
+.gradient-hero {
+  background: radial-gradient(ellipse at center, rgba(255, 167, 38, 0.15) 0%, transparent 70%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b4a 0%, #ffa726 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mesh-gradient {
+  background: radial-gradient(at 20% 30%, rgba(255, 107, 74, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(0, 217, 163, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(255, 167, 38, 0.12) 0px, transparent 50%);
+}
+
+.card-hover {
+  transition: all 300ms ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-0.25rem);
+  box-shadow: 0 10px 30px rgba(255, 107, 74, 0.15);
+}
+
+.btn-gradient {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+  transition: all 300ms ease;
+}
+
+.btn-gradient:hover {
+  background: #e5e5e5;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.glow-orange {
+  box-shadow: 0 0 40px rgba(255, 107, 74, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 40px rgba(0, 217, 163, 0.3);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 30px rgba(255, 107, 74, 0.25), 0 0 60px rgba(0, 217, 163, 0.15);
+}
