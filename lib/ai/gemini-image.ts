@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai"
 import * as fal from "@fal-ai/serverless-client"
+import { generateImage as generateReplicateImage } from "@/lib/replicate"
 
 export interface GenerateImageOptions {
   prompt: string
@@ -11,15 +12,17 @@ export interface GenerateImageOptions {
 export interface ImageGenerationResult {
   imageUrl: string
   prompt: string
-  provider: "gemini" | "fal" | "pollinations" | "placeholder"
+  provider: "gemini" | "fal" | "stability" | "replicate" | "pollinations" | "placeholder"
   aspectRatio: string
 }
 
 /**
- * Multi-tier Image Generation Engine:
+ * 5-Tier Industrial Strength Image Generation Engine:
  * Tier 1: Google Gemini Image API / Imagen 3 (Nano Banana / Gemini Flash Image)
  * Tier 2: fal.ai (Flux Schnell / Fast SDXL)
- * Tier 3: Pollinations AI (Zero-fail fallback)
+ * Tier 3: Stability AI (Stable Image Core / Ultra)
+ * Tier 4: Replicate (Flux Schnell)
+ * Tier 5: Pollinations AI (Zero-fail free fallback)
  */
 export async function generateSocialImage(options: GenerateImageOptions): Promise<ImageGenerationResult> {
   const { prompt, aspectRatio = "1:1", style, brandColors } = options
@@ -40,6 +43,8 @@ Create a high-quality, ultra-detailed image that is visually appealing and on-br
 
   const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   const falApiKey = process.env.FAL_KEY || process.env.FAL_API_KEY
+  const stabilityApiKey = process.env.STABILITY_API_KEY || process.env.STABILITY_KEY
+  const replicateApiKey = process.env.REPLICATE_API_KEY || process.env.REPLICATE_API_TOKEN
   const geminiModel = process.env.GEMINI_IMAGE_MODEL || "imagen-3.0-generate-002"
 
   // ==========================================
@@ -50,13 +55,11 @@ Create a high-quality, ultra-detailed image that is visually appealing and on-br
       console.log(`[Image Generator] Attempting Tier 1: Gemini (${geminiModel})...`)
       const ai = new GoogleGenAI({ apiKey: geminiApiKey })
 
-      // Map aspect ratio to Gemini format
       let geminiAspect: "1:1" | "16:9" | "9:16" | "4:3" | "3:4" = "1:1"
       if (aspectRatio === "16:9" || aspectRatio === "9:16" || aspectRatio === "4:3" || aspectRatio === "3:4") {
         geminiAspect = aspectRatio
       }
 
-      // Try Imagen generation through official SDK
       const response = await ai.models.generateImages({
         model: geminiModel,
         prompt: finalPrompt,
@@ -80,8 +83,6 @@ Create a high-quality, ultra-detailed image that is visually appealing and on-br
     } catch (geminiError: any) {
       console.warn("[Image Generator] Tier 1 (Gemini) failed, falling back to Tier 2:", geminiError?.message || geminiError)
     }
-  } else {
-    console.log("[Image Generator] GEMINI_API_KEY not found in environment, checking Tier 2 (fal.ai)...")
   }
 
   // ==========================================
@@ -90,11 +91,8 @@ Create a high-quality, ultra-detailed image that is visually appealing and on-br
   if (falApiKey) {
     try {
       console.log("[Image Generator] Attempting Tier 2: fal.ai (fal-ai/flux/schnell)...")
-      fal.config({
-        credentials: falApiKey,
-      })
+      fal.config({ credentials: falApiKey })
 
-      // Map aspect ratio for fal.ai flux
       let imageSize: "square_hd" | "landscape_16_9" | "portrait_16_9" = "square_hd"
       if (aspectRatio === "16:9") imageSize = "landscape_16_9"
       else if (aspectRatio === "9:16") imageSize = "portrait_16_9"
@@ -119,15 +117,82 @@ Create a high-quality, ultra-detailed image that is visually appealing and on-br
         }
       }
     } catch (falError: any) {
-      console.warn("[Image Generator] Tier 2 (fal.ai) failed, falling back to Tier 3 (Pollinations):", falError?.message || falError)
+      console.warn("[Image Generator] Tier 2 (fal.ai) failed, falling back to Tier 3:", falError?.message || falError)
     }
   }
 
   // ==========================================
-  // TIER 3: Pollinations AI (Reliable Zero-Fail Fallback)
+  // TIER 3: Stability AI (Stable Image Core)
+  // ==========================================
+  if (stabilityApiKey) {
+    try {
+      console.log("[Image Generator] Attempting Tier 3: Stability AI...")
+      const formData = new FormData()
+      formData.append("prompt", finalPrompt)
+      formData.append("output_format", "webp")
+      formData.append("aspect_ratio", aspectRatio === "16:9" ? "16:9" : aspectRatio === "9:16" ? "9:16" : "1:1")
+
+      const stabilityRes = await fetch("https://api.stability.ai/v2beta/stable-image/generate/core", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${stabilityApiKey}`,
+          Accept: "image/*",
+        },
+        body: formData,
+      })
+
+      if (stabilityRes.ok) {
+        const arrayBuffer = await stabilityRes.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString("base64")
+        console.log("[Image Generator] Successfully generated image via Stability AI!")
+        return {
+          imageUrl: `data:image/webp;base64,${base64}`,
+          prompt: finalPrompt,
+          provider: "stability",
+          aspectRatio,
+        }
+      } else {
+        const errText = await stabilityRes.text().catch(() => "")
+        console.warn("[Image Generator] Stability AI API response error:", errText)
+      }
+    } catch (stabError: any) {
+      console.warn("[Image Generator] Tier 3 (Stability AI) failed, falling back to Tier 4:", stabError?.message || stabError)
+    }
+  }
+
+  // ==========================================
+  // TIER 4: Replicate (Flux Schnell)
+  // ==========================================
+  if (replicateApiKey) {
+    try {
+      console.log("[Image Generator] Attempting Tier 4: Replicate (Flux Schnell)...")
+      let repAspect: "1:1" | "16:9" | "9:16" = "1:1"
+      if (aspectRatio === "16:9" || aspectRatio === "9:16") repAspect = aspectRatio
+
+      const repImageUrl = await generateReplicateImage({
+        prompt: finalPrompt,
+        aspectRatio: repAspect,
+      })
+
+      if (repImageUrl) {
+        console.log("[Image Generator] Successfully generated image via Replicate!")
+        return {
+          imageUrl: repImageUrl,
+          prompt: finalPrompt,
+          provider: "replicate",
+          aspectRatio,
+        }
+      }
+    } catch (repError: any) {
+      console.warn("[Image Generator] Tier 4 (Replicate) failed, falling back to Tier 5:", repError?.message || repError)
+    }
+  }
+
+  // ==========================================
+  // TIER 5: Pollinations AI (Zero-Fail Fallback)
   // ==========================================
   try {
-    console.log("[Image Generator] Attempting Tier 3: Pollinations AI...")
+    console.log("[Image Generator] Attempting Tier 5: Pollinations AI...")
     const encodedPrompt = encodeURIComponent(finalPrompt)
     const seed = Math.floor(Math.random() * 1000000)
     let width = 1080
