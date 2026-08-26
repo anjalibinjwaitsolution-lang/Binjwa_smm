@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
   const state = Math.random().toString(36).substring(7)
   
   // Create the authorization URL
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/linkedin/callback`
+  const rawBase = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://localhost:3000'
+  const baseUrl = rawBase.replace(/\/+$/, '')
+  const redirectUri = `${baseUrl}/api/auth/linkedin/callback`
   const scope = 'openid profile w_member_social email'
   
   const linkedinAuthUrl = new URL('https://www.linkedin.com/oauth/v2/authorization')

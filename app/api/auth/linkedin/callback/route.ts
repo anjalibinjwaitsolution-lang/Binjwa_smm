@@ -35,10 +35,12 @@ export async function GET(request: NextRequest) {
 
     const clientId = process.env.LINKEDIN_CLIENT_ID
     const clientSecret = process.env.LINKEDIN_CLIENT_SECRET
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/linkedin/callback`
+    const rawBase = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://localhost:3000'
+    const baseUrl = rawBase.replace(/\/+$/, '')
+    const redirectUri = `${baseUrl}/api/auth/linkedin/callback`
 
     if (!clientId || !clientSecret) {
-      return htmlResponse('Missing LinkedIn credentials in environment variables', false)
+      return htmlResponse('Missing LinkedIn credentials in environment variables (LINKEDIN_CLIENT_ID or LINKEDIN_CLIENT_SECRET)', false)
     }
 
     // Exchange code for access token
@@ -60,7 +62,8 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       console.error('LinkedIn Token Error:', tokenData)
-      return htmlResponse('Failed to exchange token', false)
+      const errorMsg = tokenData.error_description || tokenData.error || 'Failed to exchange token with LinkedIn'
+      return htmlResponse(errorMsg, false)
     }
 
     const accessToken = tokenData.access_token
@@ -76,7 +79,8 @@ export async function GET(request: NextRequest) {
 
     if (!profileResponse.ok) {
       console.error('LinkedIn Profile Error:', profileData)
-      return htmlResponse('Failed to fetch profile', false)
+      const errorMsg = profileData.message || profileData.error_description || profileData.error || 'Failed to fetch LinkedIn profile'
+      return htmlResponse(errorMsg, false)
     }
 
     // Save connection to DB
