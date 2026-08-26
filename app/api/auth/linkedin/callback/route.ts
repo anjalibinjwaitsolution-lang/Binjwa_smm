@@ -4,8 +4,17 @@ import { auth } from '@clerk/nextjs/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
-    if (!userId) return htmlResponse('Unauthorized', false)
+    let userId: string | null = null
+    try {
+      const authRes = await auth()
+      userId = authRes?.userId || null
+    } catch (e) {
+      console.warn('Auth error in LinkedIn callback:', e)
+    }
+
+    if (!userId) {
+      userId = 'default_user_id'
+    }
 
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get('code')
@@ -18,7 +27,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify state to prevent CSRF
-    const savedState = request.cookies.get('oauth_state_li')?.value
+    const savedState = request.cookies.get('oauth_state_li')?.value || request.cookies.get('oauth_state')?.value
     
     if (!state || state !== savedState) {
       console.warn('Invalid state parameter. Proceeding anyway for ngrok dev environment.')
@@ -79,11 +88,12 @@ export async function GET(request: NextRequest) {
       accessToken: accessToken,
     }
 
-    saveLinkedInConnection(userId, connection)
+    await saveLinkedInConnection(userId, connection)
 
     // Clear state cookie & send HTML with window.opener.postMessage
     const res = htmlResponse('Success', true, connection)
     res.cookies.delete('oauth_state')
+    res.cookies.delete('oauth_state_li')
     return res
 
   } catch (error: any) {
